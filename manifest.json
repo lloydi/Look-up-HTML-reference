@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Look up HTML reference",
+  "description": "Provides a quick and easy way to look up HTML references on WhatWG and MDN reference, then copy the URL as markdown/HTML",
+  "version": "2.0.1",
+  "permissions": ["scripting", "activeTab", "sidePanel"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_icon": "html_ref_icon.png"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html",
+    "default_icon": "html_ref_icon.png"
+  }
+}
