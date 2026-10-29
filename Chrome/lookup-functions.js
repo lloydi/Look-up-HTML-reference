@@ -568,26 +568,38 @@ javascript:(function(){
   //   return title;
   // }
   
-  // Define all possible buttons
-  const allButtons = [
-    { text: 'Copy MDN page URL as Markdown Link (1)', key: '1', action: 'MDNpageMarkdown' },
-    { text: 'Copy MDN page URL as HTML Link (2)', key: '2', action: 'MDNpageHtml' },
-    { text: 'Go to MDN ref page (3)', key: '3', action: 'gotoMDNpage' },
-    { text: 'Copy HTML spec URL as Markdown Link (4)', key: '4', action: 'HTMLspecMarkdown' },
-    { text: 'Copy HTML spec URL as HTML Link (5)', key: '5', action: 'HTMLspecHtml' },
-    { text: 'Go to HTML spec page (6)', key: '6', action: 'gotoHTMLspec' },
+  // Define all possible buttons, grouped by the source they depend on
+  const mdnButtons = [
+    { text: 'Copy MDN page URL as Markdown Link', action: 'MDNpageMarkdown' },
+    { text: 'Copy MDN page URL as HTML Link', action: 'MDNpageHtml' },
+    { text: 'Go to MDN ref page', action: 'gotoMDNpage' },
   ];
-  
+  const specButtons = [
+    { text: 'Copy HTML spec URL as Markdown Link', action: 'HTMLspecMarkdown' },
+    { text: 'Copy HTML spec URL as HTML Link', action: 'HTMLspecHtml' },
+    { text: 'Go to HTML spec page', action: 'gotoHTMLspec' },
+  ];
+
+  // A source is available only if its URL is present and not the "N/A" placeholder
+  function hasUrl(url) {
+    return typeof url === 'string' && url.trim() !== '' && url.trim().toUpperCase() !== 'N/A';
+  }
+
+  // Build the list of buttons for an item, keeping only available sources.
+  // Shortcut numbers are assigned after filtering, so they are always 1..n.
+  function getAvailableButtons(item) {
+    const buttons = [];
+    if (hasUrl(item.mdnUrl)) buttons.push(...mdnButtons);
+    if (hasUrl(item.whatwgUrl)) buttons.push(...specButtons);
+    return buttons.map((btn, i) => ({ ...btn, key: String(i + 1) }));
+  }
+
   // Function to create buttons based on selected item
   function createButtons(item) {
     // Clear existing buttons
     buttonsDiv.innerHTML = '';
-    
-    // Determine which buttons to show based on category
-    const isAttribute = item.category === 'attribute' || item.category === 'ARIA';
-    const buttonsToShow = isAttribute ? allButtons.slice(0, 3) : allButtons;
-    
-    buttonsToShow.forEach(btn => {
+
+    getAvailableButtons(item).forEach(btn => {
       const button = document.createElement('button');
       button.textContent = btn.text;
       button.className = 'action-button';
@@ -1179,17 +1191,14 @@ function concatenatedWordMatch(titleWords, queryWords) {
     
     // Handle number keys for button actions when an item is selected
     if (selectedItem && e.key >= '1' && e.key <= '6' && shadowRoot.activeElement !== input) {
-      const keyNum = parseInt(e.key);
-      const isAttribute = selectedItem.category === 'attribute' || selectedItem.category === 'ARIA attribute';
-      
-      // For attributes, only allow keys 1-3
-      if (isAttribute && keyNum > 3) {
-        return; // Ignore keys 4-6 for attributes
+      // Only keys matching a currently displayed button do anything
+      const match = getAvailableButtons(selectedItem).find(btn => btn.key === e.key);
+      if (!match) {
+        return;
       }
-      
+
       e.preventDefault();
-      const actions = ['MDNpageMarkdown', 'MDNpageHtml', 'gotoMDNpage', 'HTMLspecMarkdown', 'HTMLspecHtml', 'gotoHTMLspec'];
-      copyContent(actions[keyNum - 1]);
+      copyContent(match.action);
     }
   });
   
